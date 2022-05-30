@@ -10,7 +10,7 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	messages      []*model.ChatMessage
-	chatObservers map[string]chan []*model.ChatMessage
-	mu            sync.Mutex
+	messages    []*model.ChatMessage
+	subscribers map[string]chan *model.ChatMessage
+	mu          sync.Mutex
 }

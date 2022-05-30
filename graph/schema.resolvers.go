@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessage) (*model.ChatMessage, error) {
+func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessage) (string, error) {
 	msg := &model.ChatMessage{
 		ID:   fmt.Sprintf("%d", time.Now().UnixNano()),
 		From: input.From,
@@ -19,7 +19,15 @@ func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessa
 	}
 	r.messages = append(r.messages, msg)
 
-	return msg, nil
+	// Notify all active subscribers
+	r.mu.Lock()
+
+	for _, sub := range r.subscribers {
+		sub <- msg
+	}
+	r.mu.Unlock()
+
+	return msg.ID, nil
 }
 
 func (r *queryResolver) Messages(ctx context.Context) ([]*model.ChatMessage, error) {
@@ -27,7 +35,26 @@ func (r *queryResolver) Messages(ctx context.Context) ([]*model.ChatMessage, err
 }
 
 func (r *subscriptionResolver) OnNewMessage(ctx context.Context) (<-chan *model.ChatMessage, error) {
-	panic(fmt.Errorf("not implemented"))
+	id := fmt.Sprintf("%d", time.Now().UnixNano())
+	msgChan := make(chan *model.ChatMessage, 1)
+
+	if r.subscribers == nil {
+		r.subscribers = make(map[string]chan *model.ChatMessage)
+	}
+
+	// This removes the subscriber once the connection terminates
+	go func() {
+		<-ctx.Done()
+		r.mu.Lock()
+		delete(r.subscribers, id)
+		r.mu.Unlock()
+	}()
+
+	r.mu.Lock()
+	r.subscribers[id] = msgChan
+	r.mu.Unlock()
+
+	return msgChan, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

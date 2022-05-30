@@ -18,7 +18,7 @@ input NewMessage {
 }
 
 type Mutation {
-  sendMessage(input: NewMessage!): ChatMessage!
+  sendMessage(input: NewMessage!): ID!
 }
 
 type Subscription {

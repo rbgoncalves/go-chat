@@ -66,7 +66,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	SendMessage(ctx context.Context, input model.NewMessage) (*model.ChatMessage, error)
+	SendMessage(ctx context.Context, input model.NewMessage) (string, error)
 }
 type QueryResolver interface {
 	Messages(ctx context.Context) ([]*model.ChatMessage, error)
@@ -243,7 +243,7 @@ input NewMessage {
 }
 
 type Mutation {
-  sendMessage(input: NewMessage!): ChatMessage!
+  sendMessage(input: NewMessage!): ID!
 }
 
 type Subscription {
@@ -483,9 +483,9 @@ func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ChatMessage)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNChatMessage2ᚖgoᚑchatᚋgraphᚋmodelᚐChatMessage(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -495,15 +495,7 @@ func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Contex
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ChatMessage_id(ctx, field)
-			case "from":
-				return ec.fieldContext_ChatMessage_from(ctx, field)
-			case "text":
-				return ec.fieldContext_ChatMessage_text(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ChatMessage", field.Name)
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	defer func() {
@@ -3075,10 +3067,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNChatMessage2goᚑchatᚋgraphᚋmodelᚐChatMessage(ctx context.Context, sel ast.SelectionSet, v model.ChatMessage) graphql.Marshaler {
-	return ec._ChatMessage(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNChatMessage2ᚕᚖgoᚑchatᚋgraphᚋmodelᚐChatMessage(ctx context.Context, sel ast.SelectionSet, v []*model.ChatMessage) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -3115,16 +3103,6 @@ func (ec *executionContext) marshalNChatMessage2ᚕᚖgoᚑchatᚋgraphᚋmodel�
 	wg.Wait()
 
 	return ret
-}
-
-func (ec *executionContext) marshalNChatMessage2ᚖgoᚑchatᚋgraphᚋmodelᚐChatMessage(ctx context.Context, sel ast.SelectionSet, v *model.ChatMessage) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ChatMessage(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
