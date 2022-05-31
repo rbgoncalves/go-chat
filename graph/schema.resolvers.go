@@ -9,9 +9,19 @@ import (
 	"go-chat/graph/generated"
 	"go-chat/graph/model"
 	"time"
+
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessage) (string, error) {
+	if len(input.From) == 0 {
+		return "", gqlerror.Errorf("From cannot have length 0")
+	}
+
+	if len(input.Text) == 0 {
+		return "", gqlerror.Errorf("Text cannot have length 0")
+	}
+
 	msg := &model.ChatMessage{
 		ID:   fmt.Sprintf("%d", time.Now().UnixNano()),
 		From: input.From,
@@ -21,7 +31,6 @@ func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessa
 
 	// Notify all active subscribers
 	r.mu.Lock()
-
 	for _, sub := range r.subscribers {
 		sub <- msg
 	}
