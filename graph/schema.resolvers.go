@@ -31,9 +31,11 @@ func (r *mutationResolver) SendMessage(ctx context.Context, input model.NewMessa
 
 	// Notify all active subscribers
 	r.mu.Lock()
+
 	for _, sub := range r.subscribers {
 		sub <- msg
 	}
+
 	r.mu.Unlock()
 
 	return msg.ID, nil
@@ -43,9 +45,9 @@ func (r *queryResolver) Messages(ctx context.Context) ([]*model.ChatMessage, err
 	return r.messages, nil
 }
 
-func (r *subscriptionResolver) OnNewMessage(ctx context.Context) (<-chan *model.ChatMessage, error) {
-	id := fmt.Sprintf("%d", time.Now().UnixNano())
+func (r *subscriptionResolver) OnNewMessage(ctx context.Context, username string) (<-chan *model.ChatMessage, error) {
 	msgChan := make(chan *model.ChatMessage, 1)
+	id := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	if r.subscribers == nil {
 		r.subscribers = make(map[string]chan *model.ChatMessage)

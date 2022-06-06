@@ -22,5 +22,5 @@ type Mutation {
 }
 
 type Subscription {
-  onNewMessage: ChatMessage
+  onNewMessage(username: ID!): ChatMessage
 }

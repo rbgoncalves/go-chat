@@ -61,7 +61,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		OnNewMessage func(childComplexity int) int
+		OnNewMessage func(childComplexity int, username string) int
 	}
 }
 
@@ -72,7 +72,7 @@ type QueryResolver interface {
 	Messages(ctx context.Context) ([]*model.ChatMessage, error)
 }
 type SubscriptionResolver interface {
-	OnNewMessage(ctx context.Context) (<-chan *model.ChatMessage, error)
+	OnNewMessage(ctx context.Context, username string) (<-chan *model.ChatMessage, error)
 }
 
 type executableSchema struct {
@@ -135,7 +135,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Subscription.OnNewMessage(childComplexity), true
+		args, err := ec.field_Subscription_onNewMessage_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.OnNewMessage(childComplexity, args["username"].(string)), true
 
 	}
 	return 0, false
@@ -247,7 +252,7 @@ type Mutation {
 }
 
 type Subscription {
-  onNewMessage: ChatMessage
+  onNewMessage(username: ID!): ChatMessage
 }
 `, BuiltIn: false},
 }
@@ -284,6 +289,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_onNewMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -707,7 +727,7 @@ func (ec *executionContext) _Subscription_onNewMessage(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().OnNewMessage(rctx)
+		return ec.resolvers.Subscription().OnNewMessage(rctx, fc.Args["username"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -752,6 +772,17 @@ func (ec *executionContext) fieldContext_Subscription_onNewMessage(ctx context.C
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ChatMessage", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_onNewMessage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
