@@ -5,6 +5,7 @@ import (
 	"go-chat/graph/generated"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -15,10 +16,15 @@ import (
 	"github.com/rs/cors"
 )
 
-const PORT = "4000"
+const defaultPort = "8080"
 const ROUTE = "/gql"
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
 	// CORS setup
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -41,8 +47,8 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", ROUTE))
 	http.Handle(ROUTE, c.Handler(srv))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", PORT)
-	err := http.ListenAndServe(":"+PORT, nil)
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		panic(err)
 	}
